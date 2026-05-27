@@ -1,0 +1,1 @@
+class SynthProcesor extends AudioWorkletProcessor{process(inputs,outputs,params){for(let i=0;i<128;i++){outputs[0][0][i]=((currentFrame+i)/128)%1}return true}}registerProcessor('sp',SynthProcessor)
