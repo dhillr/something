@@ -19,7 +19,7 @@ class SynthProcessor extends AudioWorkletProcessor {
             this.wave = waves[params.type];
 
         for (let i = 0; i < 128; i++) {
-            let t = (currentFrame + i) / sampleRate;
+            let t = (currentFrame + i) / sampleRate * params.frequency;
             outputs[0][0][i] = t % 1;
         }
 
