@@ -9,15 +9,19 @@ let waves = {"saw": saw, "sin": sin, "sqr": sqr, "tri": tri};
 class SynthProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
-            { name: "type", defaultValue: "tri" },
             { name: "frequency", defaultValue: 440 }
         ];
     }
 
-    process(inputs, outputs, params) {
-        if (!this.wave)
-            this.wave = waves[params.type];
+    constructor() {
+        super();
 
+        this.port.onmessage = e => {
+            this.wave = waves[e.data.type];
+        }
+    }
+
+    process(inputs, outputs, params) {
         for (let i = 0; i < 128; i++) {
             let t = (currentFrame + i) / sampleRate * params.frequency;
             outputs[0][0][i] = t % 1;
