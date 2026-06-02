@@ -15,6 +15,21 @@ let waves = {
     "value": tri // placeholder
 };
 
+function applyOperator(operator, input, waveValue) {
+    switch (operator) {
+        case ADD:
+            return input + waveValue;
+        case SUB:
+            return input - waveValue;
+        case MUL:
+            return input * waveValue;
+        case DIV:
+            return input / waveValue;
+        case POW:
+            return input ** waveValue;
+    }
+}
+
 class SynthProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
@@ -44,32 +59,13 @@ class SynthProcessor extends AudioWorkletProcessor {
             let t = (currentFrame + i) / sampleRate * params.frequency;
             let waveValue = this.wave(t);
 
-            if (this.waveType = value)
-                waveType = params.frequency;
+            if (this.waveType = "value")
+                waveValue = params.frequency;
 
-            if (params.operator < 0) {
+            if (params.operator < 0)
                 outputs[0][0][i] = waveValue;
-            } else {
-                let output = outputs[0][0][i];
-                let input = inputs[0][0][i];
-                switch (operator) {
-                    case ADD:
-                        output = input + waveValue;
-                        break;
-                    case SUB:
-                        output = input - waveValue;
-                        break;
-                    case MUL:
-                        output = input * waveValue;
-                        break;
-                    case DIV:
-                        output = input / waveValue;
-                        break;
-                    case POW:
-                        output = input ** waveValue;
-                        break;
-                }
-            }
+            else
+                outputs[0][0][i] = applyOperator(operator, inputs[0][0][i], waveValue);
         }
 
         return this.isProcessing;
