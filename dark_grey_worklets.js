@@ -59,7 +59,7 @@ class SynthProcessor extends AudioWorkletProcessor {
             let t = (currentFrame + i) / sampleRate * params.frequency;
             let waveValue = this.wave(t);
 
-            if (this.waveType = "value")
+            if (this.waveType == "value")
                 waveValue = params.frequency;
 
             if (params.operator < 0)
