@@ -65,7 +65,7 @@ class SynthProcessor extends AudioWorkletProcessor {
             if (params.operator < 0)
                 outputs[0][0][i] = waveValue;
             else
-                outputs[0][0][i] = applyOperator(operator, inputs[0][0][i], waveValue);
+                outputs[0][0][i] = applyOperator(params.operator, inputs[0][0][i], waveValue);
         }
 
         return this.isProcessing;
