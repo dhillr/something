@@ -90,10 +90,12 @@ class ValueProcessor extends AudioWorkletProcessor {
         input = input ? input : [];
 
         for (let i = 0; i < 128; i++) {
-            if (params.operator < 0)
+            if (params.operator < 0) {
                 outputs[0][0][i] = params.value;
-            else
+            } else {
+                console.log(params.operator);
                 outputs[0][0][i] = applyOperator(params.operator, input[i], params.value);
+            }
         }
 
         return this.isProcessing;
