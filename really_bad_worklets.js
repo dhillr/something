@@ -87,7 +87,7 @@ class ValueProcessor extends AudioWorkletProcessor {
             if (params.operator < 0) {
                 outputs[0][0][i] = params.value;
             } else {
-                outputs[0][0][i] = applyOperator(params.operator[0], input[i], params.value);
+                outputs[0][0][i] = applyOperator(params.operator[0], input[i], params.value[0]);
             }
         }
 
