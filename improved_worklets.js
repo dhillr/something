@@ -58,7 +58,6 @@ class SynthProcessor extends AudioWorkletProcessor {
     process(inputs, outputs, params) {
         for (let i = 0; i < 128; i++) {
             let t = (currentFrame + i) / sampleRate * params.frequency;
-            console.log(params.frequency);
             outputs[0][0][i] = this.wave(t);
         }
 
@@ -93,8 +92,7 @@ class ValueProcessor extends AudioWorkletProcessor {
             if (params.operator < 0) {
                 outputs[0][0][i] = params.value;
             } else {
-                console.log(params.operator, params.value);
-                outputs[0][0][i] = applyOperator(params.operator, input[i], params.value);
+                outputs[0][0][i] = applyOperator(params.operator[0], input[i], params.value);
             }
         }
 
