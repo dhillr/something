@@ -96,3 +96,4 @@ class ValueProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor('synth-processor', SynthProcessor);
+registerProcessor('value-processor', ValueProcessor);
