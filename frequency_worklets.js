@@ -37,8 +37,7 @@ function applyOperator(operator, input, waveValue) {
 class SynthProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
-            { name: "frequency", defaultValue: 440 },
-            { name: "operator", defaultValue: -1 }
+            { name: "frequency", defaultValue: 440 }
         ];
     }
 
@@ -59,6 +58,7 @@ class SynthProcessor extends AudioWorkletProcessor {
     process(inputs, outputs, params) {
         for (let i = 0; i < 128; i++) {
             let t = (currentFrame + i) / sampleRate * params.frequency;
+            console.log(params.frequency);
             outputs[0][0][i] = this.wave(t);
         }
 
