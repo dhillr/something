@@ -17,19 +17,14 @@ let waves = {
 function applyOperator(operator, input, waveValue) {
     switch (operator) {
         case ADD:
-            console.log("add");
             return input + waveValue;
         case SUB:
-            console.log("sub");
             return input - waveValue;
         case MUL:
-            console.log("mul");
             return input * waveValue;
         case DIV:
-            console.log("div");
             return input / waveValue;
         case POW:
-            console.log("pow");
             return input ** waveValue;
     }
 }
