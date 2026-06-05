@@ -11,7 +11,8 @@ let waves = {
     "saw": saw, "sawtooth": saw,
     "sin": sin, "sine": sin,
     "sqr": sqr, "square": sqr,
-    "tri": tri, "triangle": tri
+    "tri": tri, "triangle": tri,
+    "value": tri // placeholder
 };
 
 function applyOperator(operator, input, waveValue) {
@@ -32,7 +33,8 @@ function applyOperator(operator, input, waveValue) {
 class SynthProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
-            { name: "frequency", defaultValue: 440 }
+            { name: "frequency", defaultValue: 440 },
+            { name: "operator", defaultValue: -1 }
         ];
     }
 
@@ -40,10 +42,12 @@ class SynthProcessor extends AudioWorkletProcessor {
         super();
 
         this.wave = tri;
+        this.waveType = "";
         this.isProcessing = true;
 
         this.port.onmessage = e => {
-            this.wave = waves[e.data.type];
+            this.waveType = e.data.type;
+            this.wave = waves[this.waveType];
             
             if (e.data.isProcessing != undefined)
                 this.isProcessing = e.data.isProcessing;
@@ -51,9 +55,21 @@ class SynthProcessor extends AudioWorkletProcessor {
     }
 
     process(inputs, outputs, params) {
+        let input = inputs[0][0];
+        input = input ? input : [];
+            
         for (let i = 0; i < 128; i++) {
             let t = (currentFrame + i) / sampleRate * params.frequency;
-            outputs[0][0][i] = this.wave(t);
+            let waveValue = this.wave(t);
+
+            if (this.waveType == "value")
+                waveValue = params.frequency;
+
+            if (params.operator < 0) {
+                outputs[0][0][i] = waveValue;
+            } else {
+                outputs[0][0][i] = applyOperator(params.operator[0], input[i], waveValue);
+            }
         }
 
         return this.isProcessing;
