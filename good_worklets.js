@@ -139,3 +139,4 @@ class OperationProcessor extends AudioWorkletProcessor {
 
 registerProcessor('synth-processor', SynthProcessor);
 registerProcessor('value-processor', ValueProcessor);
+registerProcessor('operation-processor', OperationProcessor);
