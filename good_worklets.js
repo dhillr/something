@@ -128,8 +128,6 @@ class OperationProcessor extends AudioWorkletProcessor {
         let in1 = inputs[1][0];
         in1 = in1 ? in1 : [];
 
-        outputs[0][0][i] = params.value;
-
         for (let i = 0; i < 128; i++) {
             if (params.operator >= 0)
                 outputs[0][0][i] = applyOperator(params.operator[0], in0[i], in1[i]);
