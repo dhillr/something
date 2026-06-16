@@ -93,8 +93,6 @@ class ValueProcessor extends AudioWorkletProcessor {
         let input = inputs[0][0];
         input = input ? input : [];
 
-        outputs[0][0][i] = params.value;
-
         for (let i = 0; i < 128; i++) {
             outputs[0][0][i] = params.value;
         }
