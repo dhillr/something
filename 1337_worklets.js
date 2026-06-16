@@ -33,8 +33,7 @@ function applyOperator(operator, input, waveValue) {
 class SynthProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
-            { name: "frequency", defaultValue: 440 },
-            { name: "operator", defaultValue: -1 }
+            { name: "frequency", defaultValue: 440 }
         ];
     }
 
@@ -65,11 +64,7 @@ class SynthProcessor extends AudioWorkletProcessor {
             if (this.waveType == "value")
                 waveValue = params.frequency;
 
-            if (params.operator < 0) {
-                outputs[0][0][i] = waveValue;
-            } else {
-                outputs[0][0][i] = applyOperator(params.operator[0], input[i], waveValue);
-            }
+            outputs[0][0][i] = waveValue;
         }
 
         return this.isProcessing;
@@ -79,8 +74,7 @@ class SynthProcessor extends AudioWorkletProcessor {
 class ValueProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
-            { name: "value", defaultValue: 1 },
-            { name: "operator", defaultValue: -1 }
+            { name: "value", defaultValue: 1 }
         ];
     }
 
@@ -99,12 +93,46 @@ class ValueProcessor extends AudioWorkletProcessor {
         let input = inputs[0][0];
         input = input ? input : [];
 
+        outputs[0][0][i] = params.value;
+
         for (let i = 0; i < 128; i++) {
-            if (params.operator < 0) {
-                outputs[0][0][i] = params.value;
-            } else {
-                outputs[0][0][i] = applyOperator(params.operator[0], input[i], params.value[0]);
-            }
+            outputs[0][0][i] = params.value;
+        }
+
+        return this.isProcessing;
+    }
+}
+
+class OperationProcessor extends AudioWorkletProcessor {
+    static get parameterDescriptors() {
+        return [
+            { name: "operator", defaultValue: -1 }
+        ];
+    }
+
+    constructor() {
+        super();
+
+        this.isProcessing = true;
+
+        this.port.onmessage = e => {
+            if (e.data.isProcessing != undefined)
+                this.isProcessing = e.data.isProcessing;
+        };
+    }
+
+    process(inputs, outputs, params) {
+        let in0 = inputs[0][0];
+        in0 = in0 ? in0 : [];
+
+        let in1 = inputs[1][0];
+        in1 = in1 ? in1 : [];
+
+        outputs[0][0][i] = params.value;
+
+        for (let i = 0; i < 128; i++) {
+            if (params.operator >= 0)
+                outputs[0][0][i] = applyOperator(params.operator[0], in0[i], in1[i]);
         }
 
         return this.isProcessing;
