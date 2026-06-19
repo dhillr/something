@@ -32,7 +32,7 @@ function applyOperator(operator, input, waveValue) {
 class SynthProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
-            { name: "frequency", defaultValue: 440 }
+            { name: "frequency", defaultValue: 0 }
         ];
     }
 
