@@ -11,8 +11,7 @@ let waves = {
     "saw": saw, "sawtooth": saw,
     "sin": sin, "sine": sin,
     "sqr": sqr, "square": sqr,
-    "tri": tri, "triangle": tri,
-    "value": tri // placeholder
+    "tri": tri, "triangle": tri
 };
 
 function applyOperator(operator, input, waveValue) {
@@ -58,11 +57,9 @@ class SynthProcessor extends AudioWorkletProcessor {
         input = input ? input : [];
             
         for (let i = 0; i < 128; i++) {
-            let t = (currentFrame + i) / sampleRate * params.frequency;
+            let freq = params.frequency.length > 1 ? params.frequency[i] : params.frequency[0];
+            let t = (currentFrame + i) / sampleRate * freq;
             let waveValue = this.wave(t);
-
-            if (this.waveType == "value")
-                waveValue = params.frequency;
 
             outputs[0][0][i] = waveValue;
         }
