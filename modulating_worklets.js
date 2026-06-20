@@ -4,6 +4,8 @@ let sin = t => Math.sin(2 * Math.PI * t);
 let sqr = t => ((t * 2) & 1) * 2 - 1;
 let tri = t => (t > .5 ? 1 - t : t) * 4 - 1;
 
+const invSampleRate = 1 / sampleRate;
+
 // operators
 const ADD = 0, SUB = 1, MUL = 2, DIV = 3, POW = 4;
 
@@ -40,12 +42,11 @@ class SynthProcessor extends AudioWorkletProcessor {
         super();
 
         this.wave = tri;
-        this.waveType = "";
+        this.t = 0;
         this.isProcessing = true;
 
         this.port.onmessage = e => {
-            this.waveType = e.data.type;
-            this.wave = waves[this.waveType];
+            this.wave = waves[e.data.type];
             
             if (e.data.isProcessing != undefined)
                 this.isProcessing = e.data.isProcessing;
@@ -58,10 +59,8 @@ class SynthProcessor extends AudioWorkletProcessor {
             
         for (let i = 0; i < 128; i++) {
             let freq = params.frequency.length > 1 ? params.frequency[i] : params.frequency[0];
-            let t = (currentFrame + i) / sampleRate * freq;
-            let waveValue = this.wave(t);
-
-            outputs[0][0][i] = waveValue;
+            outputs[0][0][i] = this.wave(t);
+            this.t += invSampleRate * freq; // because calculating t on it's own leads to problems when modulating frequency
         }
 
         return this.isProcessing;
