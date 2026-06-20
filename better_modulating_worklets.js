@@ -4,10 +4,10 @@ let sin = t => Math.sin(2 * Math.PI * t);
 let sqr = t => ((t * 2) & 1) * 2 - 1;
 let tri = t => (t > .5 ? 1 - t : t) * 4 - 1;
 
-const invSampleRate = 1 / sampleRate;
-
 // operators
 const ADD = 0, SUB = 1, MUL = 2, DIV = 3, POW = 4;
+
+const invSampleRate = 1 / sampleRate;
 
 let waves = {
     "saw": saw, "sawtooth": saw,
@@ -59,8 +59,8 @@ class SynthProcessor extends AudioWorkletProcessor {
             
         for (let i = 0; i < 128; i++) {
             let freq = params.frequency.length > 1 ? params.frequency[i] : params.frequency[0];
-            outputs[0][0][i] = this.wave(t);
-            this.t += invSampleRate * freq; // because calculating t on it's own leads to problems when modulating frequency
+            outputs[0][0][i] = this.wave(this.t);
+            this.t += invSampleRate * freq; // because calculating t on its own leads to problems when modulating frequency
         }
 
         return this.isProcessing;
@@ -86,12 +86,8 @@ class ValueProcessor extends AudioWorkletProcessor {
     }
 
     process(inputs, outputs, params) {
-        let input = inputs[0][0];
-        input = input ? input : [];
-
-        for (let i = 0; i < 128; i++) {
+        for (let i = 0; i < 128; i++)
             outputs[0][0][i] = params.value;
-        }
 
         return this.isProcessing;
     }
