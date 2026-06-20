@@ -155,7 +155,9 @@ class ADSREnvelopeProcessor extends AudioWorkletProcessor {
             let sustain = params.sustain.length > 1 ? params.sustain[i] : params.sustain[0];
             let release = params.release.length > 1 ? params.release[i] : params.release[0];
 
-            let aTime = this.triggerTime + attack, dTime = aTime + decay, rTime = dTime + release;
+            let aTime = this.triggerTime + attack * sampleRate;
+            let dTime = aTime + decay * sampleRate;
+            let rTime = dTime + release * sampleRate;
 
             let output = 0;
 
@@ -216,4 +218,4 @@ registerProcessor('synth-processor', SynthProcessor);
 registerProcessor('value-processor', ValueProcessor);
 registerProcessor('operation-processor', OperationProcessor);
 registerProcessor('trigger-processor', TriggerProcessor);
-registerProcessor('adsr-enevlope-processor', ADSREnvelopeProcessor);
+registerProcessor('adsr-envelope-processor', ADSREnvelopeProcessor);
