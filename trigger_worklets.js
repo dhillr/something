@@ -93,6 +93,91 @@ class ValueProcessor extends AudioWorkletProcessor {
     }
 }
 
+class TriggerProcessor extends AudioWorkletProcessor {
+    static get parameterDescriptors() {
+        return [
+            { name: "rate", defaultValue: 2 }
+        ];
+    }
+
+    constructor() {
+        super();
+
+        this.isProcessing = true;
+
+        this.port.onmessage = e => {
+            if (e.data.isProcessing != undefined)
+                this.isProcessing = e.data.isProcessing;
+        };
+    }
+
+    process(inputs, outputs, params) {
+        for (let i = 0; i < 128; i++) {
+            let rate = params.rate.length > 1 ? params.rate[i] : params.rate[0];
+            let t = currentFrame % (sampleRate / rate);
+
+            outputs[0][0][i] = t < 1;
+        }
+
+        return this.isProcessing;
+    }
+}
+
+class ADSREnvelopeProcessor extends AudioWorkletProcessor {
+    static get parameterDescriptors() {
+        return [
+            { name: "attack", defaultValue: .1 },
+            { name: "decay", defaultValue: .2 },
+            { name: "sustain", defaultValue: 0 },
+            { name: "release", defaultValue: 0 }
+        ];
+    }
+
+    constructor() {
+        super();
+
+        this.triggerTime = -1;
+        this.isProcessing = true;
+
+        this.port.onmessage = e => {
+            if (e.data.isProcessing != undefined)
+                this.isProcessing = e.data.isProcessing;
+        };
+    }
+
+    process(inputs, outputs, params) {
+        let input = inputs[0][0];
+        input = input ? input : [];
+
+        for (let i = 0; i < 128; i++) {
+            let attack = params.attack.length > 1 ? params.attack[i] : params.attack[0];
+            let decay = params.decay.length > 1 ? params.decay[i] : params.decay[0];
+            let sustain = params.sustain.length > 1 ? params.sustain[i] : params.sustain[0];
+            let release = params.release.length > 1 ? params.release[i] : params.release[0];
+
+            let aTime = this.triggerTime + attack, dTime = aTime + decay, rTime = dTime + release;
+
+            let output = 0;
+
+            if (input[i] > 0) this.triggerTime = currentFrame;
+            if (this.triggerTime < 0) continue;
+
+            if (currentFrame < aTime) {
+                output = (currentFrame - this.triggerTime) * invSampleRate / attack;
+            } else if (currentFrame < dTime) {
+                output = 1 - ((currentFrame - aTime) * invSampleRate / decay * (1 - sustain)); // maybe exponential decay?
+            }
+            //  else if (currentFrame < rTime) {
+            //     output = sustain - ((currentFrame - aTime) * invSampleRate / decay * sustain);
+            // }
+
+            outputs[0][0][i] = output;
+        }
+
+        return this.isProcessing;
+    }
+}
+
 class OperationProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
@@ -130,3 +215,5 @@ class OperationProcessor extends AudioWorkletProcessor {
 registerProcessor('synth-processor', SynthProcessor);
 registerProcessor('value-processor', ValueProcessor);
 registerProcessor('operation-processor', OperationProcessor);
+registerProcessor('trigger-processor', TriggerProcessor);
+registerProcessor('adsr-enevlope-processor', ADSREnvelopeProcessor);
