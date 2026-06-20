@@ -93,6 +93,37 @@ class ValueProcessor extends AudioWorkletProcessor {
     }
 }
 
+class SequenceProcessor extends AudioWorkletProcessor {
+    static get parameterDescriptors() {
+        return [];
+    }
+
+    constructor() {
+        super();
+
+        this.inputIndex = -1;
+        this.isProcessing = true;
+
+        this.port.onmessage = e => {
+            if (e.data.isProcessing != undefined)
+                this.isProcessing = e.data.isProcessing;
+        };
+    }
+
+    process(inputs, outputs, params) {
+        for (let i = 0; i < 128; i++) {
+            if (inputs[0][0][i] > 0) {
+                this.inputIndex++;
+                this.inputIndex %= inputs.length - 1;
+            }
+
+            outputs[0][0][i] = inputs[this.inputIndex+1][0][i];
+        }
+
+        return this.isProcessing;
+    }
+}
+
 class TriggerProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
@@ -219,3 +250,4 @@ registerProcessor('value-processor', ValueProcessor);
 registerProcessor('operation-processor', OperationProcessor);
 registerProcessor('trigger-processor', TriggerProcessor);
 registerProcessor('adsr-envelope-processor', ADSREnvelopeProcessor);
+registerProcessor('sequence-processor', SequenceProcessor);
