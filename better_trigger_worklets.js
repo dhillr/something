@@ -114,7 +114,7 @@ class TriggerProcessor extends AudioWorkletProcessor {
     process(inputs, outputs, params) {
         for (let i = 0; i < 128; i++) {
             let rate = params.rate.length > 1 ? params.rate[i] : params.rate[0];
-            let t = currentFrame % (sampleRate / rate);
+            let t = (currentFrame + i) % (sampleRate / rate);
 
             outputs[0][0][i] = t < 1;
         }
