@@ -18,16 +18,11 @@ let waves = {
 
 function applyOperator(operator, input, waveValue) {
     switch (operator) {
-        case ADD:
-            return input + waveValue;
-        case SUB:
-            return input - waveValue;
-        case MUL:
-            return input * waveValue;
-        case DIV:
-            return input / waveValue;
-        case POW:
-            return input ** waveValue;
+        case ADD: return input + waveValue;
+        case SUB: return input - waveValue;
+        case MUL: return input * waveValue;
+        case DIV: return input / waveValue;
+        case POW: return input ** waveValue;
     }
 }
 
@@ -42,7 +37,7 @@ class SynthProcessor extends AudioWorkletProcessor {
         super();
 
         this.wave = tri;
-        this.t = 0;
+        this.t = currentTime;
         this.isProcessing = true;
 
         this.port.onmessage = e => {
@@ -93,15 +88,19 @@ class ValueProcessor extends AudioWorkletProcessor {
     }
 }
 
-class SequenceProcessor extends AudioWorkletProcessor {
+class OperationProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
-        return [];
+        return [
+            { name: "operator", defaultValue: -1 },
+            { name: "aValue", defaultValue: 0 },
+            { name: "bValue", defaultValue: 0 },
+            { name: "isValue", defaultValue: 0 },
+        ];
     }
 
     constructor() {
         super();
 
-        this.inputIndex = -1;
         this.isProcessing = true;
 
         this.port.onmessage = e => {
@@ -111,13 +110,19 @@ class SequenceProcessor extends AudioWorkletProcessor {
     }
 
     process(inputs, outputs, params) {
-        for (let i = 0; i < 128; i++) {
-            if (inputs[0][0][i] > 0) {
-                this.inputIndex++;
-                this.inputIndex %= inputs.length - 1;
-            }
+        let in0 = inputs[0][0];
+        in0 = in0 ? in0 : [];
 
-            outputs[0][0][i] = inputs[this.inputIndex+1][0][i];
+        let in1 = inputs[1][0];
+        in1 = in1 ? in1 : [];
+
+        for (let i = 0; i < 128; i++) {
+            if (params.operator >= 0)
+                outputs[0][0][i] = applyOperator(
+                    params.operator[0],
+                    params.isValue[0] & 0b01 ? params.aValue[0] : in0[i],
+                    params.isValue[0] & 0b10 ? params.bValue[0] : in1[i]
+                );
         }
 
         return this.isProcessing;
@@ -160,7 +165,8 @@ class ADSREnvelopeProcessor extends AudioWorkletProcessor {
             { name: "attack", defaultValue: .1 },
             { name: "decay", defaultValue: .2 },
             { name: "sustain", defaultValue: 0 },
-            { name: "release", defaultValue: 0 }
+            { name: "release", defaultValue: 0 },
+            { name: "expStrength", defaultValue: 0 }
         ];
     }
 
@@ -185,6 +191,7 @@ class ADSREnvelopeProcessor extends AudioWorkletProcessor {
             let decay = params.decay.length > 1 ? params.decay[i] : params.decay[0];
             let sustain = params.sustain.length > 1 ? params.sustain[i] : params.sustain[0];
             let release = params.release.length > 1 ? params.release[i] : params.release[0];
+            let expStrength = params.expStrength.length > 1 ? params.expStrength[i] : params.expStrength[0];
 
             let aTime = this.triggerTime + attack * sampleRate;
             let dTime = aTime + decay * sampleRate;
@@ -198,7 +205,11 @@ class ADSREnvelopeProcessor extends AudioWorkletProcessor {
             if (currentFrame < aTime) {
                 output = (currentFrame - this.triggerTime) * invSampleRate / attack;
             } else if (currentFrame < dTime) {
-                output = 1 - ((currentFrame - aTime) * invSampleRate / decay * (1 - sustain)); // maybe exponential decay?
+                if (expStrength > 0)
+                    output = (Math.pow(expStrength, 1 - (currentFrame - aTime) * invSampleRate / decay) - 1)
+                        / (expStrength - 1) * (1 - sustain) + sustain;
+                else
+                    output = 1 - (currentFrame - aTime) * invSampleRate / decay * (1 - sustain);
             }
             //  else if (currentFrame < rTime) {
             //     output = sustain - ((currentFrame - aTime) * invSampleRate / decay * sustain);
@@ -211,16 +222,15 @@ class ADSREnvelopeProcessor extends AudioWorkletProcessor {
     }
 }
 
-class OperationProcessor extends AudioWorkletProcessor {
+class SequenceProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
-        return [
-            { name: "operator", defaultValue: -1 }
-        ];
+        return [];
     }
 
     constructor() {
         super();
 
+        this.inputIndex = -1;
         this.isProcessing = true;
 
         this.port.onmessage = e => {
@@ -230,15 +240,13 @@ class OperationProcessor extends AudioWorkletProcessor {
     }
 
     process(inputs, outputs, params) {
-        let in0 = inputs[0][0];
-        in0 = in0 ? in0 : [];
-
-        let in1 = inputs[1][0];
-        in1 = in1 ? in1 : [];
-
         for (let i = 0; i < 128; i++) {
-            if (params.operator >= 0)
-                outputs[0][0][i] = applyOperator(params.operator[0], in0[i], in1[i]);
+            if (inputs[0][0][i] > 0) {
+                this.inputIndex++;
+                this.inputIndex %= inputs.length - 1;
+            }
+
+            outputs[0][0][i] = inputs[this.inputIndex+1][0][i];
         }
 
         return this.isProcessing;
