@@ -37,7 +37,7 @@ class SynthProcessor extends AudioWorkletProcessor {
         super();
 
         this.wave = tri;
-        this.t = currentTime;
+        this.t = 0;
         this.isProcessing = true;
 
         this.port.onmessage = e => {
@@ -139,6 +139,7 @@ class TriggerProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
 
+        this.t = 0;
         this.pattern = "x";
         this.patternIndex = -1;
         this.isProcessing = true;
@@ -153,13 +154,14 @@ class TriggerProcessor extends AudioWorkletProcessor {
     process(inputs, outputs, params) {
         for (let i = 0; i < 128; i++) {
             let rate = params.rate.length > 1 ? params.rate[i] : params.rate[0];
-            let t = (currentFrame + i) % (sampleRate / rate);
+            let t = this.t % sampleRate;
 
             if (t < 1) this.patternIndex++;
             let patternChar = this.pattern[this.patternIndex%this.pattern.length];
             outputs[0][0][i] = t < 1 && patternChar == "x";
 
             if (patternChar == "o") outputs[0][0][i] = 1;
+            this.t += rate;
         }
 
         return this.isProcessing;
@@ -180,6 +182,7 @@ class ADSREnvelopeProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
 
+        this.initialTriggerTime = -1;
         this.triggerTime = -1;
         this.isProcessing = true;
 
@@ -200,13 +203,17 @@ class ADSREnvelopeProcessor extends AudioWorkletProcessor {
             let release = params.release.length > 1 ? params.release[i] : params.release[0];
             let expStrength = params.expStrength.length > 1 ? params.expStrength[i] : params.expStrength[0];
 
-            let aTime = this.triggerTime + attack * sampleRate;
+            if (input[i] > 0) {
+                this.triggerTime = currentFrame;
+                if (this.initialTriggerTime != currentFrame - 1)
+                    this.initialTriggerTime = currentFrame;
+            }
+
+            let aTime = this.initialTriggerTime + attack * sampleRate;
             let dTime = aTime + decay * sampleRate;
-            let rTime = dTime + release * sampleRate;
 
             let output = 0;
 
-            if (input[i] > 0) this.triggerTime = currentFrame;
             if (this.triggerTime < 0) continue;
 
             if (currentFrame < aTime) {
@@ -217,10 +224,11 @@ class ADSREnvelopeProcessor extends AudioWorkletProcessor {
                         / (expStrength - 1) * (1 - sustain) + sustain;
                 else
                     output = 1 - (currentFrame - aTime) * invSampleRate / decay * (1 - sustain);
+            } else if (currentFrame > dTime && his.triggerTime == currentFrame) {
+                output = sustain;
+            } else if (this.triggerTime != currentFrame) {
+                output = sustain - (currentFrame - aTime) * invSampleRate / decay * sustain;
             }
-            //  else if (currentFrame < rTime) {
-            //     output = sustain - ((currentFrame - aTime) * invSampleRate / decay * sustain);
-            // }
 
             outputs[0][0][i] = output;
         }
