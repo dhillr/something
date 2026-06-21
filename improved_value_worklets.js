@@ -156,7 +156,7 @@ class TriggerProcessor extends AudioWorkletProcessor {
             let rate = params.rate.length > 1 ? params.rate[i] : params.rate[0];
             let time = this.t % sampleRate;
 
-            if (time < 1) this.patternIndex++;
+            if (time < rate) this.patternIndex++;
             let patternChar = this.pattern[this.patternIndex%this.pattern.length];
             outputs[0][0][i] = time < 1 && patternChar == "x";
 
