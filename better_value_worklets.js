@@ -145,7 +145,7 @@ class TriggerProcessor extends AudioWorkletProcessor {
         this.isProcessing = true;
 
         this.port.onmessage = e => {
-            this.pattern = e.data.pattern;
+            if (e.data.pattern) this.pattern = e.data.pattern;
             if (e.data.isProcessing != undefined)
                 this.isProcessing = e.data.isProcessing;
         };
@@ -158,7 +158,7 @@ class TriggerProcessor extends AudioWorkletProcessor {
 
             if (time < rate) this.patternIndex++;
             let patternChar = this.pattern[this.patternIndex%this.pattern.length];
-            outputs[0][0][i] = time < 1 && patternChar == "x";
+            outputs[0][0][i] = time < rate && patternChar == "x";
 
             if (patternChar == "o") outputs[0][0][i] = 1;
             this.t += rate;
