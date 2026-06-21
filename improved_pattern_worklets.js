@@ -224,7 +224,7 @@ class ADSREnvelopeProcessor extends AudioWorkletProcessor {
                         / (expStrength - 1) * (1 - sustain) + sustain;
                 else
                     output = 1 - (currentFrame - aTime) * invSampleRate / decay * (1 - sustain);
-            } else if (currentFrame > dTime && his.triggerTime == currentFrame) {
+            } else if (currentFrame >= dTime && this.triggerTime == currentFrame) {
                 output = sustain;
             } else if (this.triggerTime != currentFrame) {
                 output = sustain - (currentFrame - aTime) * invSampleRate / decay * sustain;
