@@ -203,10 +203,12 @@ class ADSREnvelopeProcessor extends AudioWorkletProcessor {
             let release = params.release.length > 1 ? params.release[i] : params.release[0];
             let expStrength = params.expStrength.length > 1 ? params.expStrength[i] : params.expStrength[0];
 
+            let frame = currentFrame + i;
+
             if (input[i] > 0) {
-                this.triggerTime = currentFrame;
-                if (this.initialTriggerTime != currentFrame - 1)
-                    this.initialTriggerTime = currentFrame;
+                this.triggerTime = frame;
+                if (this.initialTriggerTime != frame - 1)
+                    this.initialTriggerTime = frame;
             }
 
             let aTime = this.initialTriggerTime + attack * sampleRate;
@@ -216,18 +218,18 @@ class ADSREnvelopeProcessor extends AudioWorkletProcessor {
 
             if (this.triggerTime < 0) continue;
 
-            if (currentFrame < aTime) {
-                output = (currentFrame - this.triggerTime) * invSampleRate / attack;
-            } else if (currentFrame < dTime) {
+            if (frame < aTime) {
+                output = (frame - this.triggerTime) * invSampleRate / attack;
+            } else if (frame < dTime) {
                 if (expStrength > 0)
-                    output = (Math.pow(expStrength, 1 - (currentFrame - aTime) * invSampleRate / decay) - 1)
+                    output = (Math.pow(expStrength, 1 - (frame - aTime) * invSampleRate / decay) - 1)
                         / (expStrength - 1) * (1 - sustain) + sustain;
                 else
-                    output = 1 - (currentFrame - aTime) * invSampleRate / decay * (1 - sustain);
-            } else if (currentFrame >= dTime && this.triggerTime == currentFrame) {
+                    output = 1 - (frame - aTime) * invSampleRate / decay * (1 - sustain);
+            } else if (frame >= dTime && this.triggerTime == frame) {
                 output = sustain;
-            } else if (this.triggerTime != currentFrame) {
-                output = sustain - (currentFrame - aTime) * invSampleRate / decay * sustain;
+            } else if (this.triggerTime != frame) {
+                output = sustain - (frame - aTime) * invSampleRate / decay * sustain;
             }
 
             outputs[0][0][i] = output;
@@ -262,6 +264,57 @@ class SequenceProcessor extends AudioWorkletProcessor {
             }
 
             outputs[0][0][i] = inputs[this.inputIndex+1][0][i];
+        }
+
+        return this.isProcessing;
+    }
+}
+
+class NoiseProcessor extends AudioWorkletProcessor {
+    static get parameterDescriptors() {
+        return [];
+    }
+
+    constructor() {
+        super();
+
+        this.prev = 0;
+        this.noiseType = undefined;
+        this.isProcessing = true;
+
+        this.port.onmessage = e => {
+            this.noiseType = e.data.noiseType;
+            if (e.data.isProcessing != undefined)
+                this.isProcessing = e.data.isProcessing;
+        };
+    }
+
+    process(inputs, outputs, params) {
+        for (let i = 0; i < 128; i++) {
+            let noiseValue = 0;
+            let white = 2 * Math.random() - 1;
+
+            let t = (currentFrame + i) * invSampleRate;
+
+            switch (this.noiseType) {
+                case "white":
+                    noiseValue = white;
+                    break;
+                case "pink":
+                    for (let i = 0; i < 64; i++) {
+                        let freq = i / 32 * sampleRate;
+                        let amp = 1 / i;
+                        noiseValue += white + amp * Math.sin(2 * Math.PI * t * (freq + Math.random()));
+                    }
+                    
+                    break;
+                case "brown":
+                    noiseValue = (this.prev + .02 * white) / 1.02;
+                    this.prev = noiseValue;
+                    break;
+            }
+
+            outputs[0][0][i] = noiseValue;
         }
 
         return this.isProcessing;
