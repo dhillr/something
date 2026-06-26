@@ -327,3 +327,4 @@ registerProcessor('operation-processor', OperationProcessor);
 registerProcessor('trigger-processor', TriggerProcessor);
 registerProcessor('adsr-envelope-processor', ADSREnvelopeProcessor);
 registerProcessor('sequence-processor', SequenceProcessor);
+registerProcessor('noise-processor', NoiseProcessor);
