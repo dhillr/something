@@ -301,11 +301,12 @@ class NoiseProcessor extends AudioWorkletProcessor {
                     noiseValue = white;
                     break;
                 case "pink":
-                    for (let i = 0; i < 64; i++) {
-                        let freq = i / 32 * sampleRate;
-                        let amp = 1 / i;
+                    for (let j = 0; j < 64; j++) {
+                        let freq = j / 32 * sampleRate;
+                        let amp = 1 / j;
                         noiseValue += white + amp * Math.sin(2 * Math.PI * t * (freq + Math.random()));
                     }
+                    noiseValue /= 64;
                     break;
                 case "brown":
                     noiseValue = (this.prev + .02 * white) / 1.02;
